@@ -1,4 +1,13 @@
 1. how would you allow saving and sending of historic data?
-first, I increased the interval value from 200 ms to 1000 (200 * 5 and also the )
+    - I used redis as a db. I could also used some other type of database but I used redis for simplicity
+    - The redis contains a queue (redis list) that holds the last hour data
+    - Every second the stock value gets pushed to the queue (line 97)
+    - There is an api that can query (line 29) that redis list ('/api/getHistory/:socketId/:last/:periodType')
 
-how would you reduce the amount of data sent to the client and make sure the data is correct according to the aggregation period they chose?
+
+2. how would you reduce the amount of data sent to the client and make
+  sure the data is correct according to the aggregation period they chose?
+    - I increased the interval value from 200 ms to 1000 (200 * 5 and also the defaultEventRate * 5)
+    - Instead of emit on each interval - the aggregation is made in the server side (line 119)
+      For example - if current period is 10 seconds - server emit to client only the aggregation - every 10 seconds
+    - Every second a stock value is pushed to a buffer and if 10 seconds have passed - it emits to client (line 103)
