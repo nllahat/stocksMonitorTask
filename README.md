@@ -4,6 +4,9 @@ Install the server
 ```sh
 npm install
 ```
+
+**Run local redis server if you want to user the history feature**
+
 Start the server
 ```sh
 node start
@@ -13,5 +16,5 @@ Open
 http://localhost:8080
 ```
 
-Screenshots:
+**Screenshots:**
 https://github.com/nllahat/stocksMonitorTask/wiki/Screen-shots

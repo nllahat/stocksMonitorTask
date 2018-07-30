@@ -9,9 +9,15 @@ import redis from 'redis';
 import { settings } from './config';
 
 const app = express();
-const redisClient = redis && redis.createClient();
 const users = {};
 const randomNumberEmitter = new EventEmitter();
+let redisClient = redis.createClient();
+
+redisClient.on('error', err => {
+    console.error(err);
+    redisClient.quit();
+    redisClient = null;
+});
 
 randomNumberEmitter.setMaxListeners(100);
 
@@ -127,6 +133,10 @@ server.listen(process.env.PORT || 8080, () => {
 });
 
 process.on('SIGTERM', () => {
+    if (redisClient) {
+        redisClient.quit();
+    }
+
     server.close(() => {
         process.exit(0);
     });
