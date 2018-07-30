@@ -1,0 +1,4 @@
+1. how would you allow saving and sending of historic data?
+first, I increased the interval value from 200 ms to 1000 (200 * 5 and also the )
+
+how would you reduce the amount of data sent to the client and make sure the data is correct according to the aggregation period they chose?

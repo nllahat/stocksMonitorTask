@@ -6,27 +6,12 @@ import morgan from 'morgan';
 import EventEmitter from "events";
 import * as handleNumbers from "./app/handleNumbers";
 import redis from 'redis';
+import { settings } from './config';
 
-const TEN_SECONDS = 10;
-const MAX_STORE_VALUE = 3600; // last hour history
-const MAX_STOCK_VALUES_SIZE = 100;
 const app = express();
+const redisClient = redis.createClient();
 const users = {};
 const randomNumberEmitter = new EventEmitter();
-const periodTypes = {
-    1: TEN_SECONDS,
-    2: TEN_SECONDS * 3, // 30 sec
-    3: TEN_SECONDS * 6, // 1 min
-    4: TEN_SECONDS * 6 * 5 // 5 min
-};
-
-let redisClient = redis.createClient();
-let config = {
-    defaultEventRate: 2
-};
-
-// Init redis list
-redisClient.del('stocksStore');
 
 randomNumberEmitter.setMaxListeners(100);
 
@@ -54,7 +39,7 @@ app.get('/api/getHistory/:socketId/:last/:periodType', (req, res) => {
                     let timeDiff = !periodAggregation || !periodAggregation.length ? 0 : periodAggregation[0].x - periodAggregation[periodAggregation.length - 1].x;
                     let diffInSec = timeDiff / 1000;
 
-                    if (diffInSec > periodTypes[users[req.params.socketId].periodType] || periodAggregation.length >= MAX_STOCK_VALUES_SIZE) {
+                    if (diffInSec > settings.periodTypes[users[req.params.socketId].periodType] || periodAggregation.length >= settings.MAX_STOCK_VALUES_SIZE) {
                         aggregatedStockValues.push(handleNumbers.aggregatePeriodStockValues(periodAggregation, periodAggregation[0].x));
                         periodAggregation = [];
                     }
@@ -71,15 +56,15 @@ app.get('/api/changePeriod/:socketId/:periodType', (req, res) => {
 
     if (!users[req.params.socketId]) {
         res.status(401).json({ err: 'Error on verification' });
-    } else if (periodTypes[type]) {
-        users[req.params.socketId].period = periodTypes[type];
+    } else if (settings.periodTypes[type]) {
+        users[req.params.socketId].period = settings.periodTypes[type];
         users[req.params.socketId].periodType = type;
     } else {
-        users[req.params.socketId].period = periodTypes[1];
+        users[req.params.socketId].period = settings.periodTypes[1];
         users[req.params.socketId].periodType = 1;
     }
 
-    res.status(200).json({ period: periodTypes[type] ? type : 1 });
+    res.status(200).json({ period: settings.periodTypes[type] ? type : 1 });
 });
 
 app.get('/*', (req, res) => {
@@ -93,7 +78,7 @@ io.on('connection', socket => {
     console.log(`Connection established (SocketId: ${socket.id})`);
 
     socket.on('start', option => {
-        users[socket.id] = { username: option.username, periodType: 1, period: periodTypes[1] };
+        users[socket.id] = { username: option.username, periodType: 1, period: settings.periodTypes[1] };
         randomNumberEmitter.on('newNumber', number => {
             socket.emit('newNumber', number);
         });
@@ -110,12 +95,12 @@ io.on('connection', socket => {
             periodAggregation.push(stockValue);
 
             redisClient.lpush('stocksStore', JSON.stringify(stockValue));
-            redisClient.ltrim('stocksStore', 0, MAX_STORE_VALUE);
+            redisClient.ltrim('stocksStore', 0, settings.MAX_STORE_VALUE);
 
             let timeDiff = !periodAggregation || !periodAggregation.length ? 0 : periodAggregation[periodAggregation.length - 1].x - periodAggregation[0].x;
             let diffInSec = timeDiff / 1000;
 
-            if (diffInSec > periodTypes[users[socket.id].periodType] || periodAggregation.length >= MAX_STOCK_VALUES_SIZE) {
+            if (diffInSec > settings.periodTypes[users[socket.id].periodType] || periodAggregation.length >= settings.MAX_STOCK_VALUES_SIZE) {
                 let periodAggregate = handleNumbers.aggregatePeriodStockValues(periodAggregation);
                 randomNumberEmitter.emit('newNumber', periodAggregate); // process and send period stockValue
                 periodAggregation = [];
@@ -131,7 +116,7 @@ io.on('connection', socket => {
 
 server.listen(process.env.PORT || 8080, () => {
     setInterval(() => { // start creating events
-        randomNumberEmitter.emit('newStockValue', handleNumbers.generateRandomStockValue(config.defaultEventRate * 5));
+        randomNumberEmitter.emit('newStockValue', handleNumbers.generateRandomStockValue(settings.defaultEventRate * 5));
     }, 200 * 5); // Interval every 1 second
 
     console.log('server listening on port', process.env.PORT || 8080);
