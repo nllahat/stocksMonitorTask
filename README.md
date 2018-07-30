@@ -5,7 +5,7 @@ Install the server
 npm install
 ```
 
-**Run local redis server if you want to user the history feature**
+**Run local redis server if you want to use the history feature**
 
 Start the server
 ```sh
