@@ -3,7 +3,7 @@
     - The redis contains a queue (redis list) that holds the last hour data
     - Every second the stock value gets pushed to the queue (line 97)
     - There is an api that can query (line 29) that redis list ('/api/getHistory/:socketId/:last/:periodType')
-    - Notice: I have a few bugs in the UI part
+    - Notice: I have a few bugs in the UI part. Let the numbers run for a minute or two to see nice chart
 
 
 2. how would you reduce the amount of data sent to the client and make
