@@ -4,18 +4,18 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon --exec babel-node -- src/index.js"
+    "start": "nodemon --exec babel-node -- index.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Quilamir/eventServer.git"
+    "url": "git+https://github.com/nllahat/stocksMonitorTask"
   },
-  "author": "",
+  "author": "Neta Li Lahat",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/Quilamir/eventServer/issues"
+    "url": "https://github.com/nllahat/stocksMonitorTask"
   },
-  "homepage": "https://github.com/Quilamir/eventServer#readme",
+  "homepage": "https://github.com/nllahat/stocksMonitorTask#readme",
   "dependencies": {
     "body-parser": "^1.18.3",
     "dotenv": "^5.0.1",

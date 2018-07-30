@@ -9,7 +9,7 @@ import redis from 'redis';
 import { settings } from './config';
 
 const app = express();
-const redisClient = redis.createClient();
+const redisClient = redis && redis.createClient();
 const users = {};
 const randomNumberEmitter = new EventEmitter();
 
@@ -23,7 +23,9 @@ app.use(bodyParser.urlencoded({ extended: false })); // parse application/x-www-
 app.use(morgan('combined'));
 
 app.get('/api/getHistory/:socketId/:last/:periodType', (req, res) => {
-    if (!users[req.params.socketId]) {
+    if (!redisClient) {
+        res.status(200).json({ aggregatedStockValues: [] });
+    } else if (!users[req.params.socketId]) {
         res.status(401).json({ err: 'Error on verification' });
     } else {
         redisClient.lrange('stocksStore', 0, parseInt(req.params.last), (err, result) => {
@@ -94,8 +96,10 @@ io.on('connection', socket => {
 
             periodAggregation.push(stockValue);
 
-            redisClient.lpush('stocksStore', JSON.stringify(stockValue));
-            redisClient.ltrim('stocksStore', 0, settings.MAX_STORE_VALUE);
+            if (redisClient) {
+                redisClient.lpush('stocksStore', JSON.stringify(stockValue));
+                redisClient.ltrim('stocksStore', 0, settings.MAX_STORE_VALUE);
+            }
 
             let timeDiff = !periodAggregation || !periodAggregation.length ? 0 : periodAggregation[periodAggregation.length - 1].x - periodAggregation[0].x;
             let diffInSec = timeDiff / 1000;
