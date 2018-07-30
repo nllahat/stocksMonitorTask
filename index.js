@@ -25,18 +25,17 @@ let config = {
     defaultEventRate: 2
 };
 
+// Init redis list
+redisClient.del('stocksStore');
+
 randomNumberEmitter.setMaxListeners(100);
 
 dotenv.config();
 
-app.use(express.static(path.join(__dirname, 'static')));
+app.use(express.static(path.join(__dirname, 'build')));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false })); // parse application/x-www-form-urlencoded
 app.use(morgan('combined'));
-
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
 
 app.get('/api/getHistory/:socketId/:last/:periodType', (req, res) => {
     if (!users[req.params.socketId]) {
@@ -81,6 +80,10 @@ app.get('/api/changePeriod/:socketId/:periodType', (req, res) => {
     }
 
     res.status(200).json({ period: periodTypes[type] ? type : 1 });
+});
+
+app.get('/*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 const server = require('http').createServer(app);
